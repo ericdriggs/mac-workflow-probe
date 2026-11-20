@@ -1,5 +1,6 @@
 #!/bin/bash
-# probe.sh: run 13 CUJ-style checks on a macOS machine and record the results.
+# probe.sh: run 13 checks on a macOS machine (install, configure, launch and observe apps) and
+# record the results.
 #
 # Usage: probe.sh <output-dir>
 #

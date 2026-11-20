@@ -1,6 +1,7 @@
 # mac-workflow-probe
 
-A probe that finds out what a macOS machine gives a scripted user journey. `probe.sh` runs 13 checks:
+A probe that finds out whether a macOS machine lets a script install, configure, launch and observe
+desktop apps. `probe.sh` runs 13 checks:
 the machine, the user, the desktop session, installing and verifying Claude Code and Claude Desktop,
 writing MCP configuration for both, launching Claude Desktop, finding its window, taking a screenshot,
 and testing permission to drive the UI. Every check records pass, fail or skipped, the exit code, the
