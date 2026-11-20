@@ -157,8 +157,17 @@ check_3_desktop_session() {
 
 check_4_install_claude_code() {
   if dstep 120 curl -fsSL --max-time 100 -o "$WORK/claude-install.sh" https://claude.ai/install.sh; then
-    dstep 900 bash "$WORK/claude-install.sh"
+    if ! dstep 900 bash "$WORK/claude-install.sh"; then
+      echo "--- diagnostics after failed install"
+      info curl -sS -i --max-time 30 https://downloads.claude.ai/claude-code-releases/latest
+      info curl -sS -4 -i --max-time 30 https://downloads.claude.ai/claude-code-releases/latest
+      info scutil --proxy
+    fi
   fi
+}
+
+lsregister_dump_claude() {
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -dump 2>/dev/null | grep -i -m5 'claude.app'
 }
 
 check_5_verify_claude_code() {
@@ -238,7 +247,7 @@ check_8_desktop_mcp_entry() {
 }
 JSON
   cp "$expected" "$DESKTOP_CONFIG" || { fail_with "cannot write config"; return; }
-  step plutil -lint "$DESKTOP_CONFIG"
+  step plutil -extract mcpServers json -o - "$DESKTOP_CONFIG"
   step cmp "$expected" "$DESKTOP_CONFIG"
   got="$(plutil -extract mcpServers.probe-stdio.command raw -o - "$DESKTOP_CONFIG")"
   echo "read back command: $got"
@@ -263,7 +272,12 @@ check_9_claude_code_mcp_entry() {
 claude_running() { pgrep -x Claude; }
 
 check_10_launch() {
-  step open -a Claude
+  # LaunchServices may need time to register a freshly copied app: poll the name lookup.
+  if ! poll 30 open -a Claude; then
+    echo "NOTE: 'open -a Claude' by name did not succeed; trying the explicit path"
+    info lsregister_dump_claude
+    step open /Applications/Claude.app || return
+  fi
   poll 90 claude_running || fail_with "Claude process did not appear within 90s" 124
 }
 
@@ -398,7 +412,7 @@ LABEL="${PROBE_LABEL:-local}"
   printf ']}\n'
 } >"$OUT/results.json"
 
-if ! plutil -lint "$OUT/results.json" >&2; then
+if ! plutil -extract checks json -o /dev/null "$OUT/results.json" >&2; then
   echo "results.json is not valid JSON" >&2
   exit 2
 fi
