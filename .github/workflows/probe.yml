@@ -23,6 +23,9 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # probe.sh runs third-party installers; leave no token in .git/config for them.
+          persist-credentials: false
 
       - name: Run probe
         env:
